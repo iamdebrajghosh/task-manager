@@ -1,0 +1,79 @@
+:root {
+  --page-bg: #f5f6fb;
+  --card-radius: 20px;
+  --card-shadow: 0px 20px 50px rgba(15, 23, 42, 0.08);
+  --text-muted: #6b7280;
+  --text-dark: #111827;
+}
+
+body {
+  background-color: var(--page-bg);
+  font-family: "Inter", "Segoe UI", "Roboto", sans-serif;
+  color: var(--text-dark);
+}
+
+.dashboard-page {
+  min-height: 100vh;
+}
+
+.dashboard-hero {
+  border-radius: var(--card-radius);
+  background: linear-gradient(135deg, #ffffff, #f0f4ff);
+  box-shadow: var(--card-shadow);
+}
+
+.filter-group .btn {
+  min-width: 7rem;
+}
+
+.filter-group .btn.active {
+  box-shadow: inset 0 0 0 2px rgba(13, 110, 253, 0.3);
+}
+
+.task-card {
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+}
+
+.task-card .list-group-item {
+  border: none;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.task-card .list-group-item:last-child {
+  border-bottom: none;
+  border-radius: 0 0 var(--card-radius) var(--card-radius);
+}
+
+.task-checkbox {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.25rem;
+}
+
+.task-title {
+  font-weight: 600;
+}
+
+.task-input .form-control-lg {
+  border-radius: 0.75rem;
+}
+
+.task-input .btn-lg {
+  border-radius: 0.75rem;
+}
+
+@media (max-width: 768px) {
+  .dashboard-hero,
+  .task-card {
+    border-radius: 16px;
+  }
+
+  .filter-group {
+    width: 100%;
+  }
+
+  .filter-group .btn {
+    flex: 1;
+  }
+}
