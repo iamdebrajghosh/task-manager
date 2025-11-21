@@ -1,10 +1,18 @@
 import axios from "../axiosInstance";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 export default function TaskItem({ task, onDelete, onUpdate, onNotify }) {
   const [error, setError] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isDeletingFile, setIsDeletingFile] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const API_BASE =
+    process.env.REACT_APP_API_BASE_URL?.replace(/\/$/, "") ||
+    "http://localhost:5000";
+  const fileUrl = task.file ? `${API_BASE}/uploads/${task.file}` : null;
 
   const toggleComplete = async () => {
     if (isUpdating || isDeleting) return;
@@ -54,6 +62,62 @@ export default function TaskItem({ task, onDelete, onUpdate, onNotify }) {
       onNotify?.(errorMsg, "danger");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const resetFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleFileUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setError("");
+    setIsUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await axios.post(`/upload/upload/${task._id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      onUpdate(res.data.task || res.data);
+      onNotify?.("File uploaded.", "success");
+    } catch (err) {
+      console.error("Error uploading file:", err);
+      const errorMsg =
+        err.response?.data?.msg ||
+        err.response?.data?.error ||
+        "Failed to upload file";
+      setError(errorMsg);
+      onNotify?.(errorMsg, "danger");
+    } finally {
+      setIsUploading(false);
+      resetFileInput();
+    }
+  };
+
+  const handleFileDelete = async () => {
+    if (isDeletingFile) return;
+    setError("");
+    setIsDeletingFile(true);
+    try {
+      const res = await axios.delete(`/upload/delete/${task._id}`);
+      onUpdate(res.data.task || res.data);
+      onNotify?.("File deleted.", "success");
+    } catch (err) {
+      console.error("Error deleting file:", err);
+      const errorMsg =
+        err.response?.data?.msg ||
+        err.response?.data?.error ||
+        "Failed to delete file";
+      setError(errorMsg);
+      onNotify?.(errorMsg, "danger");
+    } finally {
+      setIsDeletingFile(false);
     }
   };
 
@@ -109,6 +173,48 @@ export default function TaskItem({ task, onDelete, onUpdate, onNotify }) {
             {isDeleting ? "Deleting..." : "Delete"}
           </button>
         </div>
+      </div>
+      <div className="d-flex flex-column flex-lg-row align-items-lg-center gap-3">
+        <label className="btn btn-outline-secondary btn-sm mb-0">
+          <input
+            type="file"
+            className="d-none"
+            onChange={handleFileUpload}
+            disabled={isUploading || isDeleting || isDeletingFile}
+            ref={fileInputRef}
+          />
+          {isUploading ? (
+            <span className="d-flex align-items-center gap-2">
+              <span
+                className="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              />
+              Uploading...
+            </span>
+          ) : (
+            "Upload File"
+          )}
+        </label>
+        {task.file && (
+          <div className="d-flex flex-wrap align-items-center gap-2">
+            <a
+              href={fileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-link btn-sm px-0"
+            >
+              View file
+            </a>
+            <button
+              className="btn btn-outline-warning btn-sm"
+              onClick={handleFileDelete}
+              disabled={isDeletingFile}
+            >
+              {isDeletingFile ? "Deleting..." : "Delete File"}
+            </button>
+          </div>
+        )}
       </div>
       {error && (
         <div className="alert alert-danger mb-0 py-2 px-3" role="alert">
