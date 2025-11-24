@@ -1,69 +1,155 @@
-// src/pages/LoginPage.js
-import React, { useState } from "react";
-import axiosInstance from "../axiosInstance";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
-export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
+function LoginPage() {
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  // If already logged in, redirect to dashboard
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [navigate]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage("");
+    setError("");
+    setLoading(true);
+
+    // Basic validation
+    if (!form.email || !form.password) {
+      setError("Please fill in all fields");
+      setLoading(false);
+      return;
+    }
 
     try {
-      const res = await axiosInstance.post('/auth/login', {
-        email: email.trim(),
-        password
+      const res = await axios.post("http://localhost:5000/api/auth/login", {
+        email: form.email.trim(),
+        password: form.password
       });
-
-      // expected: res.data.token
-      const { token, user } = res.data;
-      if (token) {
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
-        setMessage('Login successful — redirecting...');
-        // small delay so user sees the message
-        setTimeout(() => navigate('/dashboard'), 600);
+      
+      if (res.data.token) {
+        // Save token to localStorage
+        localStorage.setItem("token", res.data.token);
+        if (res.data.user) {
+          localStorage.setItem("user", JSON.stringify(res.data.user));
+        }
+        
+        // Redirect to dashboard - using replace to avoid back button issues
+        navigate("/dashboard", { replace: true });
       } else {
-        setMessage('Login failed: No token returned');
+        setError("No token received from server");
       }
     } catch (err) {
-      console.error('Login error:', err);
+      console.error("Login error:", err);
+      
       if (err.response) {
         // Server responded with error
-        const msg = err.response.data?.msg || `Login failed: ${err.response.status} ${err.response.statusText}`;
-        setMessage(msg);
+        const errorMsg = err.response.data?.msg || err.response.data?.error || `Login failed: ${err.response.status}`;
+        setError(errorMsg);
       } else if (err.request) {
-        // Request made but no response
-        setMessage('Login failed: Cannot connect to server. Is the backend running?');
+        // Request made but no response (server not running or CORS issue)
+        setError("Cannot connect to server. Please make sure the backend is running on http://localhost:5000");
       } else {
         // Error setting up request
-        setMessage('Login failed: ' + err.message);
+        setError("An error occurred: " + err.message);
       }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="d-flex justify-content-center align-items-center vh-100">
-      <div className="card p-4 shadow" style={{ width: "400px" }}>
-        <h2 className="text-center mb-4">Login</h2>
-        {message && <p className="text-center text-danger fw-bold">{message}</p>}
-        <form onSubmit={handleLogin}>
-          <div className="mb-3">
-            <label className="form-label">Email</label>
-            <input type="email" className="form-control" placeholder="you@example.com" value={email} required onChange={(e)=>setEmail(e.target.value)} />
+    <div style={{ 
+      display: "flex", 
+      justifyContent: "center", 
+      alignItems: "center", 
+      minHeight: "100vh",
+      padding: "20px"
+    }}>
+      <form onSubmit={handleSubmit} style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "10px",
+        width: "100%",
+        maxWidth: "400px",
+        padding: "20px",
+        border: "1px solid #ccc",
+        borderRadius: "8px"
+      }}>
+        <h2 style={{ textAlign: "center", marginBottom: "20px" }}>Login</h2>
+        
+        {error && (
+          <div style={{
+            padding: "10px",
+            backgroundColor: "#f8d7da",
+            color: "#721c24",
+            borderRadius: "4px",
+            marginBottom: "10px",
+            fontSize: "14px"
+          }}>
+            {error}
           </div>
-          <div className="mb-3">
-            <label className="form-label">Password</label>
-            <input type="password" className="form-control" placeholder="Enter password" value={password} required onChange={(e)=>setPassword(e.target.value)} />
-          </div>
-          <button type="submit" className="btn btn-primary w-100">Login</button>
-        </form>
-        <p className="text-center mt-3"><small>No account? Register later</small></p>
-      </div>
+        )}
+        
+        <input 
+          type="email"
+          placeholder="Email" 
+          value={form.email}
+          onChange={(e) => {
+            setForm({ ...form, email: e.target.value });
+            setError("");
+          }}
+          style={{ padding: "10px", fontSize: "16px" }}
+          required
+          disabled={loading}
+        />
+        <input 
+          placeholder="Password" 
+          type="password" 
+          value={form.password}
+          onChange={(e) => {
+            setForm({ ...form, password: e.target.value });
+            setError("");
+          }}
+          style={{ padding: "10px", fontSize: "16px" }}
+          required
+          disabled={loading}
+        />
+        <button 
+          type="submit"
+          disabled={loading}
+          style={{ 
+            padding: "10px", 
+            fontSize: "16px", 
+            backgroundColor: loading ? "#6c757d" : "#007bff", 
+            color: "white", 
+            border: "none", 
+            borderRadius: "4px",
+            cursor: loading ? "not-allowed" : "pointer"
+          }}
+        >
+          {loading ? (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+              <span className="spinner" />
+              Logging in...
+            </span>
+          ) : (
+            "Login"
+          )}
+        </button>
+        <p style={{ textAlign: "center", marginTop: "10px" }}>
+          <a href="/register">Need an account? Register</a>
+        </p>
+      </form>
     </div>
   );
 }
+
+export default LoginPage;

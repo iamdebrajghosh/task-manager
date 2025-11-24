@@ -116,6 +116,21 @@ export default function Dashboard() {
 
   const handleRetry = () => loadTasks();
 
+  const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "/login";
+  };
+
+  const currentUser = (() => {
+    try {
+      const raw = localStorage.getItem("user");
+      return raw ? JSON.parse(raw) : null;
+    } catch (_) {
+      return null;
+    }
+  })();
+
   return (
     <div className="dashboard-page py-5">
       <div className="container">
@@ -130,13 +145,18 @@ export default function Dashboard() {
                 Filter, search, and manage your to-dos without losing momentum.
               </p>
             </div>
-            <button
-              className="btn btn-outline-secondary align-self-lg-center"
-              onClick={handleRetry}
-              disabled={isLoading}
-            >
-              {isLoading ? "Refreshing..." : "Refresh"}
-            </button>
+            <div className="d-flex gap-2 align-self-lg-center">
+              <button
+                className="btn btn-outline-secondary"
+                onClick={handleRetry}
+                disabled={isLoading}
+              >
+                {isLoading ? "Refreshing..." : "Refresh"}
+              </button>
+              <button className="btn btn-outline-danger" onClick={logout}>
+                Logout
+              </button>
+            </div>
           </div>
         </section>
 
@@ -158,6 +178,12 @@ export default function Dashboard() {
         <section className="card shadow-sm border-0 mb-4">
           <div className="card-body">
             <TaskInput onAdd={handleTaskAdded} />
+            {currentUser?.role === "admin" && (
+              <div className="mt-3 d-flex gap-2">
+                <button className="btn btn-outline-primary btn-sm">Admin Action A</button>
+                <button className="btn btn-outline-primary btn-sm">Admin Action B</button>
+              </div>
+            )}
           </div>
         </section>
 

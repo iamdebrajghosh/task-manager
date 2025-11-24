@@ -1,27 +1,19 @@
-// middleware/authMiddleware.js
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 
 const auth = (req, res, next) => {
-  // Try multiple ways to get the token
-  const authHeader = req.headers.authorization || req.headers.Authorization || req.header('Authorization');
-  const token = authHeader?.split(' ')[1]; // 'Bearer <token>'
-  
-  if (!token) {
-    return res.status(401).json({ msg: 'No token, authorization denied' });
-  }
+  const headerToken = req.headers.authorization || req.headers.Authorization;
+  const bearerToken = headerToken && headerToken.startsWith("Bearer ") ? headerToken.split(" ")[1] : null;
+  const token = bearerToken || req.header("x-auth-token");
+
+  if (!token) return res.status(401).json({ msg: "No token, access denied" });
 
   try {
-    if (!process.env.JWT_SECRET) {
-      console.error('JWT_SECRET is not set');
-      return res.status(500).json({ msg: 'Server configuration error' });
-    }
-    
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const secret = process.env.JWT_SECRET || "dev-secret";
+    const decoded = jwt.verify(token, secret);
     req.user = decoded;
     next();
   } catch (err) {
-    console.error('Token verification error:', err.message);
-    res.status(401).json({ msg: 'Token is not valid' });
+    res.status(400).json({ msg: "Invalid token" });
   }
 };
 
