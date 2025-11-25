@@ -3,6 +3,7 @@ import axios from "../axiosInstance";
 
 export default function TaskInput({ onAdd }) {
   const [title, setTitle] = useState("");
+  const [category, setCategory] = useState("personal");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -12,9 +13,10 @@ export default function TaskInput({ onAdd }) {
     try {
       setError("");
       setIsSubmitting(true);
-      const res = await axios.post("/tasks", { title: title.trim() });
+      const res = await axios.post("/tasks", { title: title.trim(), category });
       onAdd(res.data);
       setTitle("");
+      setCategory("personal");
     } catch (err) {
       console.error("Error adding task:", err);
       const errorMsg =
@@ -40,6 +42,18 @@ export default function TaskInput({ onAdd }) {
         Create a task
       </label>
       <div className="d-flex flex-column flex-md-row gap-2">
+        <div className="w-100 w-md-auto" style={{ maxWidth: 220 }}>
+          <select
+            className="form-select form-select-lg"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            disabled={isSubmitting}
+          >
+            <option value="work">Work</option>
+            <option value="personal">Personal</option>
+            <option value="urgent">Urgent</option>
+          </select>
+        </div>
         <input
           className="form-control form-control-lg"
           placeholder="e.g. Follow up with marketing"

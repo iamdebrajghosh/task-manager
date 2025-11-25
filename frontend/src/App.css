@@ -45,6 +45,10 @@ body {
   border-radius: 0 0 var(--card-radius) var(--card-radius);
 }
 
+.task-item:hover {
+  background-color: #f8fafc;
+}
+
 .task-checkbox {
   width: 1.25rem;
   height: 1.25rem;
@@ -89,4 +93,17 @@ body {
   .filter-group .btn {
     flex: 1;
   }
+}
+/* Skeleton */
+.skeleton-line {
+  height: 12px;
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 37%, #e5e7eb 63%);
+  background-size: 400% 100%;
+  border-radius: 8px;
+  animation: shimmer 1.4s ease infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }

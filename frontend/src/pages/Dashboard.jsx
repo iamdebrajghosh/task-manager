@@ -12,6 +12,7 @@ const FILTERS = [
 export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [serverSearch, setServerSearch] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -50,6 +51,7 @@ export default function Dashboard() {
           params: {
             status,
             ...(search ? { search } : {}),
+            ...(categoryFilter ? { category: categoryFilter } : {}),
           },
         });
         setTasks(res.data);
@@ -65,7 +67,7 @@ export default function Dashboard() {
         if (!silent) setIsLoading(false);
       }
     },
-    [notify, serverSearch, statusFilter]
+    [notify, serverSearch, statusFilter, categoryFilter]
   );
 
   useEffect(() => {
@@ -109,10 +111,14 @@ export default function Dashboard() {
     );
 
   const filteredTasks = useMemo(() => {
-    if (!searchTerm.trim()) return tasks;
+    let cur = tasks;
+    if (categoryFilter) {
+      cur = cur.filter((t) => t.category === categoryFilter);
+    }
+    if (!searchTerm.trim()) return cur;
     const term = searchTerm.trim().toLowerCase();
-    return tasks.filter((task) => task.title.toLowerCase().includes(term));
-  }, [tasks, searchTerm]);
+    return cur.filter((task) => task.title.toLowerCase().includes(term));
+  }, [tasks, searchTerm, categoryFilter]);
 
   const handleRetry = () => loadTasks();
 
@@ -202,6 +208,19 @@ export default function Dashboard() {
                   {filter.label}
                 </button>
               ))}
+            </div>
+            <div>
+              <label className="form-label fw-semibold small text-muted mb-1">Category</label>
+              <select
+                className="form-select"
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+              >
+                <option value="">All</option>
+                <option value="work">Work</option>
+                <option value="personal">Personal</option>
+                <option value="urgent">Urgent</option>
+              </select>
             </div>
             <div className="flex-grow-1 w-100">
               <label className="form-label fw-semibold small text-muted mb-1">

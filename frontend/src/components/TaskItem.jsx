@@ -1,5 +1,6 @@
 import axios from "../axiosInstance";
 import { useRef, useState } from "react";
+import { motion } from "framer-motion";
 
 export default function TaskItem({ task, onDelete, onUpdate, onNotify }) {
   const [error, setError] = useState("");
@@ -122,7 +123,13 @@ export default function TaskItem({ task, onDelete, onUpdate, onNotify }) {
   };
 
   return (
-    <li className="list-group-item px-4 py-3 d-flex flex-column gap-3">
+    <motion.li
+      className="list-group-item px-4 py-3 d-flex flex-column gap-3 task-item"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      layout
+    >
       <div className="d-flex flex-wrap align-items-center gap-3">
         <div className="form-check m-0">
           <input
@@ -170,6 +177,7 @@ export default function TaskItem({ task, onDelete, onUpdate, onNotify }) {
                 aria-hidden="true"
               />
             )}
+            {!isDeleting && <i className="bi bi-trash"></i>}
             {isDeleting ? "Deleting..." : "Delete"}
           </button>
         </div>
@@ -221,6 +229,6 @@ export default function TaskItem({ task, onDelete, onUpdate, onNotify }) {
           {error}
         </div>
       )}
-    </li>
+    </motion.li>
   );
 }

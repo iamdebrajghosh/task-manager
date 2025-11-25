@@ -6,6 +6,11 @@ const TaskSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    category: {
+      type: String,
+      enum: ["work", "personal", "urgent"],
+      default: "personal",
+    },
     file: {
       type: String,
       default: null,
