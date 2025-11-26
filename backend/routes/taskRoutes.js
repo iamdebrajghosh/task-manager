@@ -14,7 +14,7 @@ router.get("/", auth, async (req, res) => {
     if (category && ["work", "personal", "urgent"].includes(category)) {
       query.category = category;
     }
-    const tasks = await Task.find(query).sort({ createdAt: -1 });
+    const tasks = await Task.find(query).sort({ createdAt: -1 }).lean();
     res.json(tasks);
   } catch (err) {
     res.status(500).json({ error: err.message });

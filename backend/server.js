@@ -1,6 +1,9 @@
 // server.js
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
+const mongoSanitize = require("express-mongo-sanitize");
 const path = require("path");
 const dotenv = require("dotenv");
 dotenv.config();
@@ -14,9 +17,23 @@ const userRoutes = require("./routes/user");
 
 const app = express();
 
-// Middleware
+app.use(helmet());
+app.use((req, res, next) => {
+  try {
+    if (req.body) req.body = mongoSanitize.sanitize(req.body);
+    if (req.params) req.params = mongoSanitize.sanitize(req.params);
+    if (req.query) {
+      const sanitized = mongoSanitize.sanitize(req.query);
+      Object.keys(req.query).forEach((k) => delete req.query[k]);
+      Object.assign(req.query, sanitized);
+    }
+  } catch (_) {}
+  next();
+});
 app.use(cors());
 app.use(express.json());
+const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 });
+app.use(limiter);
 
 // Connect Database
 connectDB();
