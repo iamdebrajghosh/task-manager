@@ -162,6 +162,11 @@ export default function Dashboard() {
               <button className="btn btn-outline-danger" onClick={logout}>
                 Logout
               </button>
+              {currentUser?.role === "admin" && (
+                <a className="btn btn-outline-primary" href="/admin/stats">
+                  Admin Stats
+                </a>
+              )}
             </div>
           </div>
         </section>

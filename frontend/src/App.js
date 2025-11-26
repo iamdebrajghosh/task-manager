@@ -5,6 +5,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import RequireAuth from './components/RequireAuth';
 import Profile from './pages/Profile';
+import AdminStats from './pages/AdminStats';
 import './App.css';
 
 function App() {
@@ -27,6 +28,14 @@ function App() {
           element={
           <RequireAuth>
             <Profile />
+          </RequireAuth>
+          } 
+        />
+        <Route 
+          path="/admin/stats" 
+          element={
+          <RequireAuth>
+            <AdminStats />
           </RequireAuth>
           } 
         />
