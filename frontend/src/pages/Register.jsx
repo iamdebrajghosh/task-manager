@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import axios from "../axiosInstance";
 
 function Register() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
@@ -9,9 +9,20 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:5000/api/auth/register", form);
-      alert("Registered successfully");
-      navigate("/");
+      const res = await axios.post("/auth/register", form);
+      if (res.data && res.data.accessToken) {
+        localStorage.setItem("token", res.data.accessToken);
+        if (res.data.refreshToken) {
+          localStorage.setItem("refreshToken", res.data.refreshToken);
+        }
+        if (res.data.user) {
+          localStorage.setItem("user", JSON.stringify(res.data.user));
+        }
+        navigate("/dashboard", { replace: true });
+      } else {
+        alert("Registration succeeded but no token returned");
+        navigate("/login", { replace: true });
+      }
     } catch (err) {
       alert(err.response?.data?.msg || err.response?.data?.error || "Registration failed");
     }

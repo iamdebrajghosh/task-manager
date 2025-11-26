@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import axios from "../axiosInstance";
 
 function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -29,19 +29,19 @@ function LoginPage() {
     }
 
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/login", {
+      const res = await axios.post("/auth/login", {
         email: form.email.trim(),
         password: form.password
       });
       
-      if (res.data.token) {
-        // Save token to localStorage
-        localStorage.setItem("token", res.data.token);
+      if (res.data.accessToken) {
+        localStorage.setItem("token", res.data.accessToken);
+        if (res.data.refreshToken) {
+          localStorage.setItem("refreshToken", res.data.refreshToken);
+        }
         if (res.data.user) {
           localStorage.setItem("user", JSON.stringify(res.data.user));
         }
-        
-        // Redirect to dashboard - using replace to avoid back button issues
         navigate("/dashboard", { replace: true });
       } else {
         setError("No token received from server");
