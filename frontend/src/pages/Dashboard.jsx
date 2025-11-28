@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Navigate } from "react-router-dom";
 import axios from "../axiosInstance";
 import TaskInput from "../components/TaskInput";
 import TaskList from "../components/TaskList";
@@ -142,6 +143,10 @@ export default function Dashboard() {
       return null;
     }
   })();
+
+  if (currentUser?.role === "admin") {
+    return <Navigate to="/admin/stats" replace />;
+  }
 
   return (
     <div className="dashboard-page py-5">

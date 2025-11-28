@@ -114,3 +114,19 @@ body {
   border-radius: 8px;
   padding: 12px 16px;
 }
+/* React Modal styling to prevent overlap */
+.ReactModal__Overlay {
+  z-index: 2000 !important;
+  background-color: rgba(0, 0, 0, 0.35) !important;
+}
+.ReactModal__Content {
+  z-index: 2001 !important;
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: var(--card-shadow) !important;
+  max-width: 760px !important;
+  width: calc(100% - 40px) !important;
+  inset: 10% auto auto 50% !important;
+  transform: translateX(-50%) !important;
+  padding: 24px !important;
+}

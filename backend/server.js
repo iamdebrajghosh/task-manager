@@ -19,6 +19,9 @@ const statsRoutes = require("./routes/stats");
 const app = express();
 
 app.use(helmet());
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use((req, res, next) => {
   try {
     if (req.body) req.body = mongoSanitize.sanitize(req.body);
@@ -31,8 +34,6 @@ app.use((req, res, next) => {
   } catch (_) {}
   next();
 });
-app.use(cors());
-app.use(express.json());
 const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 });
 app.use(limiter);
 
