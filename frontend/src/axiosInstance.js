@@ -4,6 +4,11 @@ const axiosInstance = axios.create({
   baseURL: process.env.REACT_APP_API_BASE_URL || "/api",
 });
 
+// Dedicated client for token refresh, no interceptors to avoid recursion
+const refreshClient = axios.create({
+  baseURL: process.env.REACT_APP_API_BASE_URL || "/api",
+});
+
 let isRefreshing = false;
 let refreshSubscribers = [];
 
@@ -34,6 +39,11 @@ axiosInstance.interceptors.response.use(
     const isAuthError = response.status === 401 || (response.status === 400 && (msg.includes("Invalid token") || msg.includes("No token") || msg.includes("access denied")));
     if (!isAuthError) return Promise.reject(error);
 
+    // Avoid intercepting refresh requests themselves
+    if (config && typeof config.url === "string" && config.url.includes("/auth/refresh")) {
+      return Promise.reject(error);
+    }
+
     const currentPath = window.location.pathname;
     if (currentPath === "/" || currentPath === "/register" || currentPath === "/login") {
       localStorage.removeItem("token");
@@ -62,7 +72,7 @@ axiosInstance.interceptors.response.use(
 
     isRefreshing = true;
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/refresh-token", { refreshToken });
+      const res = await refreshClient.post("/auth/refresh", { refreshToken });
       const newAccessToken = res.data?.accessToken;
       const newRefreshToken = res.data?.refreshToken;
       if (newAccessToken) localStorage.setItem("token", newAccessToken);
@@ -77,7 +87,10 @@ axiosInstance.interceptors.response.use(
       localStorage.removeItem("token");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("user");
-      window.location.href = "/login";
+      const current = window.location.pathname;
+      if (current !== "/login" && current !== "/register") {
+        window.location.href = "/login";
+      }
       return Promise.reject(error);
     }
   }

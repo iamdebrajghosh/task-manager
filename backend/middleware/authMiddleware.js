@@ -17,4 +17,12 @@ const auth = (req, res, next) => {
   }
 };
 
+const authorizeRoles = (...allowed) => (req, res, next) => {
+  const role = req.user?.role;
+  if (!role) return res.status(403).json({ msg: "Forbidden" });
+  if (!allowed.includes(role)) return res.status(403).json({ msg: "Forbidden" });
+  next();
+};
+
 module.exports = auth;
+module.exports.authorizeRoles = authorizeRoles;

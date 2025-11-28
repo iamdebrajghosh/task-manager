@@ -42,7 +42,9 @@ function LoginPage() {
         if (res.data.user) {
           localStorage.setItem("user", JSON.stringify(res.data.user));
         }
-        navigate("/dashboard", { replace: true });
+        const role = res.data.user?.role || "user";
+        const dest = role === "admin" ? "/admin/stats" : "/dashboard";
+        navigate(dest, { replace: true });
       } else {
         setError("No token received from server");
       }

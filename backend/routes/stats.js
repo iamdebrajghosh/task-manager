@@ -1,5 +1,6 @@
 const express = require("express");
 const Task = require("../models/Task");
+const { authorizeRoles } = require("../middleware/authMiddleware");
 const auth = require("../middleware/authMiddleware");
 
 const router = express.Router();
@@ -15,17 +16,15 @@ const countByCategory = (tasks) => {
 
 const dateKey = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
 
-router.get("/stats", auth, async (req, res) => {
+router.get("/stats", auth, authorizeRoles("admin"), async (req, res) => {
   try {
-    const isAdmin = req.user.role === "admin";
     const { period } = req.query;
     const now = new Date();
     const windows = { "24h": 1, "7d": 7, "30d": 30 };
     const days = windows[period] || 7;
     const from = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 
-    const match = isAdmin ? { createdAt: { $gte: from } } : { userId: req.user.id, createdAt: { $gte: from } };
-    const tasks = await Task.find(match).lean();
+    const tasks = await Task.find({ createdAt: { $gte: from } }).lean();
 
     const total = tasks.length;
     const completed = tasks.filter((t) => !!t.completed).length;
@@ -34,7 +33,7 @@ router.get("/stats", auth, async (req, res) => {
 
     const seriesDays = 7;
     const seriesFrom = new Date(now.getTime() - seriesDays * 24 * 60 * 60 * 1000);
-    const seriesTasks = isAdmin ? await Task.find({ createdAt: { $gte: seriesFrom } }).lean() : await Task.find({ userId: req.user.id, createdAt: { $gte: seriesFrom } }).lean();
+    const seriesTasks = await Task.find({ createdAt: { $gte: seriesFrom } }).lean();
     const buckets = new Map();
     for (let i = 0; i < seriesDays; i++) {
       const d = new Date(now.getTime() - (seriesDays - i) * 24 * 60 * 60 * 1000);
@@ -52,11 +51,9 @@ router.get("/stats", auth, async (req, res) => {
   }
 });
 
-router.get("/stats/count", auth, async (req, res) => {
+router.get("/stats/count", auth, authorizeRoles("admin"), async (req, res) => {
   try {
-    const isAdmin = req.user.role === "admin";
-    const filter = isAdmin ? {} : { userId: req.user.id };
-    const total = await Task.countDocuments(filter);
+    const total = await Task.countDocuments({});
     res.json({ total });
   } catch (err) {
     res.status(500).json({ error: err.message });

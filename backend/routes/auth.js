@@ -37,7 +37,7 @@ router.post('/register', async (req, res) => {
     const hash = await bcrypt.hash(refreshToken, 10);
     user.refreshTokenHash = hash;
     await user.save();
-    res.status(201).json({ msg: 'User registered', user: { id: user._id, name: user.name, email: user.email, role: user.role }, accessToken, refreshToken });
+    res.status(201).json({ accessToken, refreshToken, user: { id: user._id, email: user.email, role: user.role } });
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: 'Server error' });
@@ -74,6 +74,26 @@ router.post('/refresh-token', async (req, res) => {
   }
 });
 
+router.post('/refresh', async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) return res.status(400).json({ msg: 'Refresh token required' });
+    const refreshSecret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
+    const decoded = jwt.verify(refreshToken, refreshSecret);
+    const user = await User.findById(decoded.id);
+    if (!user || !user.refreshTokenHash) return res.status(401).json({ msg: 'Invalid refresh token' });
+    const match = await bcrypt.compare(refreshToken, user.refreshTokenHash);
+    if (!match) return res.status(401).json({ msg: 'Invalid refresh token' });
+    const accessToken = issueAccessToken(user);
+    const newRefreshToken = issueRefreshToken(user);
+    user.refreshTokenHash = await bcrypt.hash(newRefreshToken, 10);
+    await user.save();
+    res.json({ accessToken, refreshToken: newRefreshToken });
+  } catch (err) {
+    res.status(401).json({ msg: 'Invalid or expired refresh token' });
+  }
+});
+
 // Login
 router.post('/login', async (req, res) => {
   try {
@@ -99,10 +119,9 @@ router.post('/login', async (req, res) => {
 
     const accessToken = issueAccessToken(user);
     const refreshToken = issueRefreshToken(user);
-    const hash = await bcrypt.hash(refreshToken, 10);
-    user.refreshTokenHash = hash;
+    user.refreshTokenHash = await bcrypt.hash(refreshToken, 10);
     await user.save();
-    res.json({ msg: 'Login successful', user: { id: user._id, name: user.name, email: user.email, role: user.role }, accessToken, refreshToken });
+    res.json({ accessToken, refreshToken, user: { id: user._id, email: user.email, role: user.role } });
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ msg: 'Server error: ' + err.message });
