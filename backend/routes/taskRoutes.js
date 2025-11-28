@@ -7,6 +7,9 @@ const router = express.Router();
 router.get("/", auth, async (req, res) => {
   try {
     const { status, search, category } = req.query;
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.max(1, Math.min(100, Number(req.query.limit) || 10));
+    const skip = (page - 1) * limit;
     const query = { userId: req.user.id };
     if (status === "completed") query.completed = true;
     if (status === "pending") query.completed = false;
@@ -14,7 +17,11 @@ router.get("/", auth, async (req, res) => {
     if (category && ["work", "personal", "urgent"].includes(category)) {
       query.category = category;
     }
-    const tasks = await Task.find(query).sort({ createdAt: -1 }).lean();
+    const tasks = await Task.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
     res.json(tasks);
   } catch (err) {
     res.status(500).json({ error: err.message });

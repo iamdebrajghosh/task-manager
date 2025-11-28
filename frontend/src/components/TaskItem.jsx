@@ -1,5 +1,7 @@
 import axios from "../axiosInstance";
 import { useRef, useState } from "react";
+import Modal from "react-modal";
+import { toast } from "react-toastify";
 import { motion } from "framer-motion";
 
 export default function TaskItem({ task, onDelete, onUpdate, onNotify }) {
@@ -8,6 +10,9 @@ export default function TaskItem({ task, onDelete, onUpdate, onNotify }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isDeletingFile, setIsDeletingFile] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState(task.title);
+  const [editDescription, setEditDescription] = useState(task.description || "");
   const fileInputRef = useRef(null);
 
   const API_BASE =
@@ -53,6 +58,7 @@ export default function TaskItem({ task, onDelete, onUpdate, onNotify }) {
       await axios.delete(`/tasks/${task._id}`);
       onDelete(task._id);
       onNotify?.("Task deleted.", "success");
+      toast.success("Task deleted.");
     } catch (err) {
       console.error("Error deleting task:", err);
       const errorMsg =
@@ -87,6 +93,7 @@ export default function TaskItem({ task, onDelete, onUpdate, onNotify }) {
       });
       onUpdate(res.data.task || res.data);
       onNotify?.("File uploaded.", "success");
+      toast.success("File uploaded.");
     } catch (err) {
       console.error("Error uploading file:", err);
       const errorMsg =
@@ -109,6 +116,7 @@ export default function TaskItem({ task, onDelete, onUpdate, onNotify }) {
       const res = await axios.delete(`/upload/delete/${task._id}`);
       onUpdate(res.data.task || res.data);
       onNotify?.("File deleted.", "success");
+      toast.success("File deleted.");
     } catch (err) {
       console.error("Error deleting file:", err);
       const errorMsg =
@@ -119,6 +127,32 @@ export default function TaskItem({ task, onDelete, onUpdate, onNotify }) {
       onNotify?.(errorMsg, "danger");
     } finally {
       setIsDeletingFile(false);
+    }
+  };
+
+  const openEdit = () => {
+    setEditTitle(task.title);
+    setEditDescription(task.description || "");
+    setIsEditOpen(true);
+  };
+
+  const saveEdit = async () => {
+    try {
+      setIsUpdating(true);
+      const res = await axios.patch(`/tasks/${task._id}`, {
+        title: editTitle,
+        description: editDescription,
+      });
+      onUpdate(res.data);
+      setIsEditOpen(false);
+      toast.success("Task updated.");
+    } catch (err) {
+      const errorMsg =
+        err.response?.data?.msg || err.response?.data?.error || "Failed to update";
+      setError(errorMsg);
+      onNotify?.(errorMsg, "danger");
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -165,6 +199,13 @@ export default function TaskItem({ task, onDelete, onUpdate, onNotify }) {
           {isUpdating && (
             <span className="text-muted small">Updating...</span>
           )}
+          <button
+            className="btn btn-outline-primary btn-sm"
+            onClick={openEdit}
+            disabled={isDeleting}
+          >
+            <i className="bi bi-pencil-square"></i> Edit
+          </button>
           <button
             className="btn btn-outline-danger btn-sm d-flex align-items-center gap-2"
             onClick={deleteTask}
@@ -229,6 +270,21 @@ export default function TaskItem({ task, onDelete, onUpdate, onNotify }) {
           {error}
         </div>
       )}
+      <Modal isOpen={isEditOpen} onRequestClose={() => setIsEditOpen(false)} ariaHideApp={false}>
+        <h5 className="mb-3">Edit Task</h5>
+        <div className="mb-3">
+          <label className="form-label">Title</label>
+          <input className="form-control" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
+        </div>
+        <div className="mb-3">
+          <label className="form-label">Description</label>
+          <textarea className="form-control" rows={3} value={editDescription} onChange={(e) => setEditDescription(e.target.value)} />
+        </div>
+        <div className="d-flex gap-2">
+          <button className="btn btn-secondary" onClick={() => setIsEditOpen(false)}>Cancel</button>
+          <button className="btn btn-primary" onClick={saveEdit} disabled={isUpdating || !editTitle.trim()}>Save</button>
+        </div>
+      </Modal>
     </motion.li>
   );
 }

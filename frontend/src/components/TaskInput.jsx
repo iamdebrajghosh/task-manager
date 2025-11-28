@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "react-toastify";
 import axios from "../axiosInstance";
 
 export default function TaskInput({ onAdd }) {
@@ -17,6 +18,7 @@ export default function TaskInput({ onAdd }) {
       onAdd(res.data);
       setTitle("");
       setCategory("personal");
+      toast.success("Todo Added!");
     } catch (err) {
       console.error("Error adding task:", err);
       const errorMsg =

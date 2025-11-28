@@ -11,6 +11,9 @@ const FILTERS = [
 
 export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [hasMore, setHasMore] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -52,9 +55,12 @@ export default function Dashboard() {
             status,
             ...(search ? { search } : {}),
             ...(categoryFilter ? { category: categoryFilter } : {}),
+            page,
+            limit,
           },
         });
         setTasks(res.data);
+        setHasMore((res.data?.length || 0) === limit);
       } catch (err) {
         console.error("Error loading tasks:", err);
         const errorMsg =
@@ -67,7 +73,7 @@ export default function Dashboard() {
         if (!silent) setIsLoading(false);
       }
     },
-    [notify, serverSearch, statusFilter, categoryFilter]
+    [notify, serverSearch, statusFilter, categoryFilter, page, limit]
   );
 
   useEffect(() => {
@@ -263,6 +269,23 @@ export default function Dashboard() {
               : "You're all caught up. Enjoy the momentum!"
           }
         />
+        <div className="d-flex justify-content-between align-items-center mt-3">
+          <button
+            className="btn btn-outline-secondary"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={isLoading || page === 1}
+          >
+            Previous
+          </button>
+          <span className="text-muted small">Page {page}</span>
+          <button
+            className="btn btn-outline-secondary"
+            onClick={() => setPage((p) => p + 1)}
+            disabled={isLoading || !hasMore}
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -107,3 +107,10 @@ body {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+.error-box {
+  border: 1px solid #dc3545;
+  background: #f8d7da;
+  color: #842029;
+  border-radius: 8px;
+  padding: 12px 16px;
+}

@@ -48,6 +48,7 @@ app.use("/api/tasks", taskRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/todos", statsRoutes);
+app.use("/api/todos", taskRoutes);
 app.use(
   "/uploads",
   express.static(path.join(__dirname, "uploads"), {
