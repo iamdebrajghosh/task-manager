@@ -10,17 +10,9 @@ function Register() {
     e.preventDefault();
     try {
       const res = await axios.post("/auth/register", form);
-      if (res.data && res.data.accessToken) {
-        localStorage.setItem("token", res.data.accessToken);
-        if (res.data.refreshToken) {
-          localStorage.setItem("refreshToken", res.data.refreshToken);
-        }
-        if (res.data.user) {
-          localStorage.setItem("user", JSON.stringify(res.data.user));
-        }
-        navigate("/dashboard", { replace: true });
+      if (res.data?.user?.email) {
+        navigate("/login", { replace: true });
       } else {
-        alert("Registration succeeded but no token returned");
         navigate("/login", { replace: true });
       }
     } catch (err) {

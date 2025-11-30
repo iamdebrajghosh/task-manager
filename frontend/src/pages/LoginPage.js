@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "../axiosInstance";
+import axios, { setAccessToken, setRefreshToken } from "../axiosInstance";
+import { useAuth } from "../context/AuthContext";
 
 function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth() || {};
 
   // If already logged in, redirect to dashboard
   useEffect(() => {
@@ -29,15 +31,25 @@ function LoginPage() {
     }
 
     try {
+      if (login) {
+        const result = await login(form.email, form.password);
+        if (result.ok) {
+          const role = result.user?.role || "user";
+          const dest = role === "admin" ? "/admin/stats" : "/dashboard";
+          navigate(dest, { replace: true });
+          return;
+        }
+        setError(result.error || "Login failed");
+        return;
+      }
       const res = await axios.post("/auth/login", {
         email: form.email.trim(),
         password: form.password
       });
-      
       if (res.data.accessToken) {
-        localStorage.setItem("token", res.data.accessToken);
+        setAccessToken(res.data.accessToken);
         if (res.data.refreshToken) {
-          localStorage.setItem("refreshToken", res.data.refreshToken);
+          setRefreshToken(res.data.refreshToken);
         }
         if (res.data.user) {
           localStorage.setItem("user", JSON.stringify(res.data.user));

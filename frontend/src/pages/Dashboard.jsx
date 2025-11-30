@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import axios from "../axiosInstance";
 import TaskInput from "../components/TaskInput";
 import TaskList from "../components/TaskList";
@@ -128,21 +129,7 @@ export default function Dashboard() {
   }, [tasks, searchTerm, categoryFilter]);
 
   const handleRetry = () => loadTasks();
-
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    window.location.href = "/login";
-  };
-
-  const currentUser = (() => {
-    try {
-      const raw = localStorage.getItem("user");
-      return raw ? JSON.parse(raw) : null;
-    } catch (_) {
-      return null;
-    }
-  })();
+  const { user: currentUser, logout } = useAuth() || {};
 
   if (currentUser?.role === "admin") {
     return <Navigate to="/admin/stats" replace />;
@@ -154,13 +141,10 @@ export default function Dashboard() {
         <section className="dashboard-hero card shadow-sm border-0 mb-4">
           <div className="card-body d-flex flex-column flex-lg-row justify-content-between align-items-start gap-3">
             <div>
-              <p className="text-uppercase fw-semibold text-primary small mb-1">
-                Welcome back
-              </p>
-              <h1 className="h3 mb-2">Stay on top of every task</h1>
-              <p className="text-muted mb-0">
-                Filter, search, and manage your to-dos without losing momentum.
-              </p>
+              <h1 className="h3 mb-1">Welcome back, {currentUser?.name || "User"}</h1>
+              <div className="text-muted small">
+                {currentUser?.email} • Role: {currentUser?.role || "user"}
+              </div>
             </div>
             <div className="d-flex gap-2 align-self-lg-center">
               <button

@@ -3,16 +3,18 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-import RequireAuth from './components/RequireAuth';
+import ProtectedRoute from './components/ProtectedRoute';
 import Profile from './pages/Profile';
 import AdminStats from './pages/AdminStats';
 import './App.css';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { AuthProvider } from './context/AuthContext';
 
 function App() {
   return (
     <BrowserRouter>
+      <AuthProvider>
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
@@ -21,28 +23,29 @@ function App() {
         <Route 
           path="/dashboard" 
           element={
-          <RequireAuth>
+          <ProtectedRoute>
             <Dashboard />
-          </RequireAuth>
+          </ProtectedRoute>
           } 
         />
         <Route 
           path="/profile" 
           element={
-          <RequireAuth>
+          <ProtectedRoute>
             <Profile />
-          </RequireAuth>
+          </ProtectedRoute>
           } 
         />
         <Route 
           path="/admin/stats" 
           element={
-          <RequireAuth>
+          <ProtectedRoute>
             <AdminStats />
-          </RequireAuth>
+          </ProtectedRoute>
           } 
         />
       </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

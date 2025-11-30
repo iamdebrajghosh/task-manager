@@ -1,10 +1,34 @@
 import axios from "axios";
 
+let accessTokenCache = null;
+let refreshTokenCache = null;
+
+export const setAccessToken = (token) => {
+  accessTokenCache = token || null;
+  if (token) localStorage.setItem("token", token);
+  else localStorage.removeItem("token");
+};
+
+export const setRefreshToken = (token) => {
+  refreshTokenCache = token || null;
+  if (token) localStorage.setItem("refreshToken", token);
+  else localStorage.removeItem("refreshToken");
+};
+
+export const getAccessToken = () => accessTokenCache || localStorage.getItem("token");
+
+export const clearAuth = () => {
+  accessTokenCache = null;
+  refreshTokenCache = null;
+  localStorage.removeItem("token");
+  localStorage.removeItem("refreshToken");
+  localStorage.removeItem("user");
+};
+
 const axiosInstance = axios.create({
   baseURL: process.env.REACT_APP_API_BASE_URL || "/api",
 });
 
-// Dedicated client for token refresh, no interceptors to avoid recursion
 const refreshClient = axios.create({
   baseURL: process.env.REACT_APP_API_BASE_URL || "/api",
 });
@@ -22,7 +46,7 @@ const onRefreshed = (newToken) => {
 };
 
 axiosInstance.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const token = getAccessToken();
   if (token) {
     config.headers["x-auth-token"] = token;
     config.headers["Authorization"] = `Bearer ${token}`;
@@ -39,7 +63,6 @@ axiosInstance.interceptors.response.use(
     const isAuthError = response.status === 401 || (response.status === 400 && (msg.includes("Invalid token") || msg.includes("No token") || msg.includes("access denied")));
     if (!isAuthError) return Promise.reject(error);
 
-    // Avoid intercepting refresh requests themselves
     if (config && typeof config.url === "string" && config.url.includes("/auth/refresh")) {
       return Promise.reject(error);
     }
@@ -51,10 +74,9 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    const refreshToken = localStorage.getItem("refreshToken");
+    const refreshToken = refreshTokenCache || localStorage.getItem("refreshToken");
     if (!refreshToken) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+      clearAuth();
       window.location.href = "/login";
       return Promise.reject(error);
     }
@@ -75,8 +97,8 @@ axiosInstance.interceptors.response.use(
       const res = await refreshClient.post("/auth/refresh", { refreshToken });
       const newAccessToken = res.data?.accessToken;
       const newRefreshToken = res.data?.refreshToken;
-      if (newAccessToken) localStorage.setItem("token", newAccessToken);
-      if (newRefreshToken) localStorage.setItem("refreshToken", newRefreshToken);
+      if (newAccessToken) setAccessToken(newAccessToken);
+      if (newRefreshToken) setRefreshToken(newRefreshToken);
       isRefreshing = false;
       onRefreshed(newAccessToken);
       originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
@@ -84,9 +106,7 @@ axiosInstance.interceptors.response.use(
       return axiosInstance(originalRequest);
     } catch (e) {
       isRefreshing = false;
-      localStorage.removeItem("token");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("user");
+      clearAuth();
       const current = window.location.pathname;
       if (current !== "/login" && current !== "/register") {
         window.location.href = "/login";
