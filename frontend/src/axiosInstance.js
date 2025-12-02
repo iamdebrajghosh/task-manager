@@ -1,4 +1,5 @@
 import axios from "axios";
+import { toast } from "react-toastify";
 
 let accessTokenCache = null;
 let refreshTokenCache = null;
@@ -103,12 +104,14 @@ axiosInstance.interceptors.response.use(
       onRefreshed(newAccessToken);
       originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
       originalRequest.headers["x-auth-token"] = newAccessToken;
+      toast.success("Token refreshed");
       return axiosInstance(originalRequest);
     } catch (e) {
       isRefreshing = false;
       clearAuth();
       const current = window.location.pathname;
       if (current !== "/login" && current !== "/register") {
+        toast.error("Session expired. Please log in again.");
         window.location.href = "/login";
       }
       return Promise.reject(error);

@@ -10,12 +10,14 @@ import './App.css';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider } from './context/AuthContext';
+import Navbar from './components/Navbar';
 
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+      <Navbar />
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<LoginPage />} />

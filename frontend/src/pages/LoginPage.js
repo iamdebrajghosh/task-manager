@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios, { setAccessToken, setRefreshToken } from "../axiosInstance";
 import { useAuth } from "../context/AuthContext";
+import Loader from "../components/Loader";
+import { toast } from "react-toastify";
 
 function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -34,11 +36,13 @@ function LoginPage() {
       if (login) {
         const result = await login(form.email, form.password);
         if (result.ok) {
+          toast.success("Login successful");
           const role = result.user?.role || "user";
           const dest = role === "admin" ? "/admin/stats" : "/dashboard";
           navigate(dest, { replace: true });
           return;
         }
+        toast.error(result.error || "Invalid credentials");
         setError(result.error || "Login failed");
         return;
       }
@@ -54,10 +58,12 @@ function LoginPage() {
         if (res.data.user) {
           localStorage.setItem("user", JSON.stringify(res.data.user));
         }
+        toast.success("Login successful");
         const role = res.data.user?.role || "user";
         const dest = role === "admin" ? "/admin/stats" : "/dashboard";
         navigate(dest, { replace: true });
       } else {
+        toast.error("No token received from server");
         setError("No token received from server");
       }
     } catch (err) {
@@ -66,12 +72,15 @@ function LoginPage() {
       if (err.response) {
         // Server responded with error
         const errorMsg = err.response.data?.msg || err.response.data?.error || `Login failed: ${err.response.status}`;
+        toast.error(errorMsg);
         setError(errorMsg);
       } else if (err.request) {
         // Request made but no response (server not running or CORS issue)
+        toast.error("Network error. Check backend.");
         setError("Cannot connect to server. Please make sure the backend is running on http://localhost:5000");
       } else {
         // Error setting up request
+        toast.error("An error occurred");
         setError("An error occurred: " + err.message);
       }
     } finally {
@@ -151,7 +160,7 @@ function LoginPage() {
         >
           {loading ? (
             <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-              <span className="spinner" />
+              <Loader />
               Logging in...
             </span>
           ) : (
