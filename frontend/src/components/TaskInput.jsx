@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
-import axios from "../axiosInstance";
+import { createTask } from "../api/tasks";
 
 export default function TaskInput({ onAdd }) {
   const [title, setTitle] = useState("");
@@ -14,7 +14,7 @@ export default function TaskInput({ onAdd }) {
     try {
       setError("");
       setIsSubmitting(true);
-      const res = await axios.post("/tasks", { title: title.trim(), category });
+      const res = await createTask({ title: title.trim(), category });
       onAdd(res.data);
       setTitle("");
       setCategory("personal");

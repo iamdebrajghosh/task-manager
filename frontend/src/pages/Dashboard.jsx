@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import axios from "../axiosInstance";
+import { getTasks } from "../api/tasks";
 import TaskInput from "../components/TaskInput";
 import TaskList from "../components/TaskList";
 
@@ -52,14 +52,12 @@ export default function Dashboard() {
         if (!silent) setIsLoading(true);
         setError("");
 
-        const res = await axios.get("/tasks", {
-          params: {
-            status,
-            ...(search ? { search } : {}),
-            ...(categoryFilter ? { category: categoryFilter } : {}),
-            page,
-            limit,
-          },
+        const res = await getTasks({
+          status,
+          ...(search ? { search } : {}),
+          ...(categoryFilter ? { category: categoryFilter } : {}),
+          page,
+          limit,
         });
         setTasks(res.data);
         setHasMore((res.data?.length || 0) === limit);

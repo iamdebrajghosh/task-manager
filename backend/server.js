@@ -4,6 +4,9 @@ const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const mongoSanitize = require("express-mongo-sanitize");
+const compression = require("compression");
+const morgan = require("morgan");
+const cookieParser = require("cookie-parser");
 const path = require("path");
 const dotenv = require("dotenv");
 dotenv.config();
@@ -18,8 +21,17 @@ const statsRoutes = require("./routes/stats");
 
 const app = express();
 
+app.set("trust proxy", "loopback");
 app.use(helmet());
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    credentials: true,
+  })
+);
+app.use(compression());
+app.use(morgan(":remote-addr :method :url :status :response-time ms"));
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use((req, res, next) => {
@@ -34,7 +46,13 @@ app.use((req, res, next) => {
   } catch (_) {}
   next();
 });
-const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 });
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { msg: "Too many requests, please try again later" },
+});
 app.use(limiter);
 
 // Connect Database

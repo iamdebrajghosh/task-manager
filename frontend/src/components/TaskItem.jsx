@@ -1,4 +1,5 @@
 import axios from "../axiosInstance";
+import { updateTask, deleteTask as deleteTaskApi } from "../api/tasks";
 import { useRef, useState } from "react";
 import Modal from "react-modal";
 import { toast } from "react-toastify";
@@ -31,7 +32,7 @@ export default function TaskItem({ task, onDelete, onUpdate, onNotify }) {
     setIsUpdating(true);
 
     try {
-      const res = await axios.patch(`/tasks/${task._id}`, {
+      const res = await updateTask(task._id, {
         completed: nextCompleted,
       });
       onUpdate(res.data);
@@ -55,7 +56,7 @@ export default function TaskItem({ task, onDelete, onUpdate, onNotify }) {
     setError("");
     setIsDeleting(true);
     try {
-      await axios.delete(`/tasks/${task._id}`);
+      await deleteTaskApi(task._id);
       onDelete(task._id);
       onNotify?.("Task deleted.", "success");
       toast.success("Task deleted.");
@@ -139,7 +140,7 @@ export default function TaskItem({ task, onDelete, onUpdate, onNotify }) {
   const saveEdit = async () => {
     try {
       setIsUpdating(true);
-      const res = await axios.patch(`/tasks/${task._id}`, {
+      const res = await updateTask(task._id, {
         title: editTitle,
         description: editDescription,
       });
