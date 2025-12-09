@@ -28,10 +28,12 @@ export const clearAuth = () => {
 
 const axiosInstance = axios.create({
   baseURL: process.env.REACT_APP_API_BASE_URL || "/api",
+  withCredentials: true,
 });
 
 const refreshClient = axios.create({
   baseURL: process.env.REACT_APP_API_BASE_URL || "/api",
+  withCredentials: true,
 });
 
 let isRefreshing = false;
