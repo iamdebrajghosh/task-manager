@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import axios from "../axiosInstance";
+import { toast } from "react-toastify";
 
 export default function Profile() {
   const [data, setData] = useState(null);
+  const [nameInput, setNameInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -13,6 +15,7 @@ export default function Profile() {
         setError("");
         const res = await axios.get("/user/me");
         setData(res.data);
+        setNameInput(res.data?.name || "");
       } catch (err) {
         const msg = err.response?.data?.msg || err.response?.data?.error || "Failed to load profile";
         setError(msg);
@@ -23,10 +26,20 @@ export default function Profile() {
     load();
   }, []);
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    window.location.href = "/login";
+  const saveName = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const res = await axios.put("/user/update", { name: nameInput });
+      setData(res.data);
+      toast.success("Name updated");
+    } catch (err) {
+      const msg = err.response?.data?.msg || err.response?.data?.error || "Failed to update name";
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -35,7 +48,6 @@ export default function Profile() {
         <div className="card-body">
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h2 className="h5 mb-0">Profile</h2>
-            <button className="btn btn-outline-danger" onClick={logout}>Logout</button>
           </div>
           {loading && <div className="spinner" />}
           {error && <div className="alert alert-danger" role="alert">{error}</div>}
@@ -43,7 +55,10 @@ export default function Profile() {
             <div className="row g-3">
               <div className="col-12 col-md-6">
                 <label className="form-label">Name</label>
-                <input className="form-control" value={data.name || ""} readOnly />
+                <div className="d-flex gap-2">
+                  <input className="form-control" value={nameInput} onChange={(e) => setNameInput(e.target.value)} />
+                  <button className="btn btn-primary" onClick={saveName} disabled={loading || !nameInput.trim()}>Save</button>
+                </div>
               </div>
               <div className="col-12 col-md-6">
                 <label className="form-label">Email</label>

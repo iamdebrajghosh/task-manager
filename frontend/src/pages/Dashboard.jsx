@@ -127,7 +127,7 @@ export default function Dashboard() {
   }, [tasks, searchTerm, categoryFilter]);
 
   const handleRetry = () => loadTasks();
-  const { user: currentUser, logout } = useAuth() || {};
+  const { user: currentUser } = useAuth() || {};
 
   if (currentUser?.role === "admin") {
     return <Navigate to="/admin/stats" replace />;
@@ -151,9 +151,6 @@ export default function Dashboard() {
                 disabled={isLoading}
               >
                 {isLoading ? "Refreshing..." : "Refresh"}
-              </button>
-              <button className="btn btn-outline-danger" onClick={logout}>
-                Logout
               </button>
               {currentUser?.role === "admin" && (
                 <a className="btn btn-outline-primary" href="/admin/stats">
@@ -259,7 +256,10 @@ export default function Dashboard() {
         <div className="d-flex justify-content-between align-items-center mt-3">
           <button
             className="btn btn-outline-secondary"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            onClick={() => {
+              setPage((p) => Math.max(1, p - 1));
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
             disabled={isLoading || page === 1}
           >
             Previous
@@ -267,7 +267,10 @@ export default function Dashboard() {
           <span className="text-muted small">Page {page}</span>
           <button
             className="btn btn-outline-secondary"
-            onClick={() => setPage((p) => p + 1)}
+            onClick={() => {
+              setPage((p) => p + 1);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
             disabled={isLoading || !hasMore}
           >
             Next
