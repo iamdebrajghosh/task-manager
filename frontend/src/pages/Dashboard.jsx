@@ -126,6 +126,18 @@ export default function Dashboard() {
     return cur.filter((task) => task.title.toLowerCase().includes(term));
   }, [tasks, searchTerm, categoryFilter]);
 
+  const totalTasks = tasks.length;
+  const completedTasks = useMemo(() => tasks.filter((t) => !!t.completed).length, [tasks]);
+  const progressPct = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  const QUOTES = [
+    "Small steps, big results.",
+    "Progress, not perfection.",
+    "Do the next right thing.",
+    "Your future self is cheering for you.",
+    "Momentum beats motivation.",
+  ];
+  const quote = QUOTES[new Date().getDay() % QUOTES.length];
+
   const handleRetry = () => loadTasks();
   const { user: currentUser } = useAuth() || {};
 
@@ -142,6 +154,16 @@ export default function Dashboard() {
               <h1 className="h3 mb-1">Welcome back, {currentUser?.name || "User"}</h1>
               <div className="text-muted small">
                 {currentUser?.email} • Role: {currentUser?.role || "user"}
+              </div>
+              <div className="mt-3">
+                <div className="d-flex justify-content-between align-items-center mb-1">
+                  <span className="text-muted small">Today’s progress</span>
+                  <span className="text-muted small">{completedTasks}/{totalTasks} • {progressPct}%</span>
+                </div>
+                <div className="progress motivation-progress" role="progressbar" aria-valuenow={progressPct} aria-valuemin="0" aria-valuemax="100">
+                  <div className="progress-bar" style={{ width: `${progressPct}%` }} />
+                </div>
+                <div className="mt-2 text-muted small fst-italic">{quote}</div>
               </div>
             </div>
             <div className="d-flex gap-2 align-self-lg-center">

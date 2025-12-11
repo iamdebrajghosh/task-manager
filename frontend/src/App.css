@@ -22,6 +22,22 @@ body {
   box-shadow: var(--card-shadow);
 }
 
+.motivation-progress {
+  height: 10px;
+  border-radius: 999px;
+  background-color: #edf2ff;
+}
+.motivation-progress .progress-bar {
+  background: linear-gradient(90deg, #0d6efd, #6c63ff);
+}
+
+.brand-gradient {
+  background: linear-gradient(90deg, #0d6efd, #6c63ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+}
+
 .filter-group .btn {
   min-width: 7rem;
 }

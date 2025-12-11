@@ -195,6 +195,15 @@ export default function TaskItem({ task, onDelete, onUpdate, onNotify }) {
           >
             {task.completed ? "Completed" : "Pending"}
           </span>
+          {task.category && (
+            <span className={`badge ms-2 ${
+              task.category === "work"
+                ? "bg-primary-subtle text-primary"
+                : task.category === "urgent"
+                ? "bg-danger-subtle text-danger"
+                : "bg-info-subtle text-info"
+            }`}>{task.category}</span>
+          )}
         </div>
         <div className="d-flex align-items-center gap-2">
           {isUpdating && (

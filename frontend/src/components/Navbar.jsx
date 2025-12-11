@@ -7,7 +7,7 @@ export default function Navbar() {
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-white border-bottom mb-3">
       <div className="container">
-        <Link className="navbar-brand fw-semibold" to={isAuthenticated ? "/dashboard" : "/"}>TodoPro</Link>
+        <Link className="navbar-brand fw-semibold brand-gradient" to={isAuthenticated ? "/dashboard" : "/"}>TodoPro</Link>
         <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
           <span className="navbar-toggler-icon" />
         </button>
