@@ -38,6 +38,11 @@ body {
   color: transparent !important;
 }
 
+.focus-card {
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
+  border: 1px solid #eef2ff;
+}
+
 .filter-group .btn {
   min-width: 7rem;
 }

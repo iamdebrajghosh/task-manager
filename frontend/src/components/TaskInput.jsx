@@ -59,6 +59,7 @@ export default function TaskInput({ onAdd }) {
         <input
           className="form-control form-control-lg"
           placeholder="e.g. Follow up with marketing"
+          id="new-task-input"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onKeyDown={handleKeyDown}

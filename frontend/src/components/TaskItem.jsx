@@ -36,6 +36,47 @@ export default function TaskItem({ task, onDelete, onUpdate, onNotify }) {
         completed: nextCompleted,
       });
       onUpdate(res.data);
+      if (nextCompleted) {
+        try {
+          const today = new Date();
+          const yyyy = today.getFullYear();
+          const mm = String(today.getMonth() + 1).padStart(2, "0");
+          const dd = String(today.getDate()).padStart(2, "0");
+          const todayKey = `${yyyy}-${mm}-${dd}`;
+          const y = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+          const yKey = `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, "0")}-${String(y.getDate()).padStart(2, "0")}`;
+          const raw = localStorage.getItem("taskStreak");
+          const obj = raw ? JSON.parse(raw) : {};
+          if (obj.lastDate === todayKey && obj.todayCompleted) {
+            // already counted today
+          } else {
+            const count = obj.lastDate === yKey ? (obj.count || 0) + 1 : 1;
+            const best = Math.max(count, obj.best || 1);
+            localStorage.setItem(
+              "taskStreak",
+              JSON.stringify({ lastDate: todayKey, count, best, todayCompleted: true })
+            );
+            if (best === count && count > (obj.best || 0)) {
+              toast.success(`New streak: ${count} days!`);
+            } else {
+              toast.success("Nice! Progress logged for today.");
+            }
+          }
+          const cRaw = localStorage.getItem("completedToday") || "{}";
+          const cObj = JSON.parse(cRaw);
+          if (cObj.date === todayKey) {
+            cObj.count = (cObj.count || 0) + 1;
+          } else {
+            cObj.date = todayKey;
+            cObj.count = 1;
+          }
+          localStorage.setItem("completedToday", JSON.stringify(cObj));
+          const goal = Number(localStorage.getItem("dailyGoal") || 3);
+          if (cObj.count === goal) {
+            toast.success("Daily goal smashed! 🎉");
+          }
+        } catch (_) {}
+      }
     } catch (err) {
       console.error("Error updating task:", err);
       const errorMsg =
@@ -48,6 +89,48 @@ export default function TaskItem({ task, onDelete, onUpdate, onNotify }) {
     } finally {
       setIsUpdating(false);
     }
+  };
+
+  const [isTimerOpen, setIsTimerOpen] = useState(false);
+  const [remaining, setRemaining] = useState(() => {
+    try {
+      const raw = localStorage.getItem(`pomodoro_${task._id}`);
+      const obj = raw ? JSON.parse(raw) : {};
+      return Number(obj.remaining || 25 * 60);
+    } catch (_) {
+      return 25 * 60;
+    }
+  });
+  const [running, setRunning] = useState(false);
+  const timerRef = useRef(null);
+
+  const startTimer = () => {
+    if (running) return;
+    setRunning(true);
+    timerRef.current = setInterval(() => {
+      setRemaining((r) => {
+        const nr = Math.max(0, r - 1);
+        localStorage.setItem(`pomodoro_${task._id}`, JSON.stringify({ remaining: nr }));
+        if (nr === 0) {
+          clearInterval(timerRef.current);
+          setRunning(false);
+          toggleComplete();
+          toast.success("Pomodoro done! Task completed.");
+        }
+        return nr;
+      });
+    }, 1000);
+  };
+
+  const pauseTimer = () => {
+    setRunning(false);
+    if (timerRef.current) clearInterval(timerRef.current);
+  };
+
+  const resetTimer = () => {
+    pauseTimer();
+    setRemaining(25 * 60);
+    localStorage.setItem(`pomodoro_${task._id}`, JSON.stringify({ remaining: 25 * 60 }));
   };
 
   const deleteTask = async () => {
@@ -280,6 +363,24 @@ export default function TaskItem({ task, onDelete, onUpdate, onNotify }) {
           {error}
         </div>
       )}
+      <div className="d-flex align-items-center gap-2">
+        <button className="btn btn-outline-success btn-sm" onClick={() => setIsTimerOpen((v) => !v)}>
+          <i className="bi bi-hourglass-split"></i> Pomodoro
+        </button>
+        {isTimerOpen && (
+          <div className="d-inline-flex align-items-center gap-2">
+            <span className="small text-muted">
+              {String(Math.floor(remaining / 60)).padStart(2, "0")}:{String(remaining % 60).padStart(2, "0")}
+            </span>
+            {!running ? (
+              <button className="btn btn-success btn-sm" onClick={startTimer}>Start</button>
+            ) : (
+              <button className="btn btn-warning btn-sm" onClick={pauseTimer}>Pause</button>
+            )}
+            <button className="btn btn-outline-secondary btn-sm" onClick={resetTimer}>Reset</button>
+          </div>
+        )}
+      </div>
       <Modal isOpen={isEditOpen} onRequestClose={() => setIsEditOpen(false)} ariaHideApp={false}>
         <h5 className="mb-3">Edit Task</h5>
         <div className="mb-3">
