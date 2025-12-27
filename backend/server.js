@@ -23,6 +23,20 @@ const app = express();
 
 app.set("trust proxy", "loopback");
 app.use(helmet());
+if (!process.env.JWT_SECRET) {
+  if (process.env.NODE_ENV !== "production") {
+    process.env.JWT_SECRET = "dev-secret";
+    console.warn("[auth] JWT_SECRET not set; using development fallback");
+  } else {
+    console.error("[auth] JWT_SECRET is required in production");
+  }
+}
+if (!process.env.JWT_REFRESH_SECRET) {
+  if (process.env.NODE_ENV !== "production") {
+    process.env.JWT_REFRESH_SECRET = process.env.JWT_SECRET;
+    console.warn("[auth] JWT_REFRESH_SECRET not set; using JWT_SECRET fallback (dev)");
+  }
+}
 const allowedOrigins = (process.env.CLIENT_URL || "http://localhost:3000")
   .split(",")
   .map((o) => o.trim())
@@ -47,6 +61,15 @@ app.use(morgan(":remote-addr :method :url :status :response-time ms"));
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use((err, req, res, next) => {
+  if (err && err.type === "entity.parse.failed") {
+    return res.status(400).json({ msg: "Invalid JSON body" });
+  }
+  if (err instanceof SyntaxError && "body" in err) {
+    return res.status(400).json({ msg: "Invalid JSON body" });
+  }
+  next(err);
+});
 app.use((req, res, next) => {
   try {
     if (req.body) req.body = mongoSanitize.sanitize(req.body);

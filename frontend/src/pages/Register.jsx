@@ -1,22 +1,52 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../axiosInstance";
+import { toast } from "react-toastify";
 
 function Register() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    
+    // Basic validation
+    if (!form.email || !form.password) {
+      toast.error("Please fill in all required fields");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const res = await axios.post("/auth/register", form);
+      const res = await axios.post("/auth/register", {
+        name: form.name.trim(),
+        email: form.email.trim(),
+        password: form.password
+      });
+      
       if (res.data?.user?.email) {
+        toast.success("Registration successful! Please login.");
         navigate("/login", { replace: true });
       } else {
+        toast.success("Registration successful! Please login.");
         navigate("/login", { replace: true });
       }
     } catch (err) {
-      alert(err.response?.data?.msg || err.response?.data?.error || "Registration failed");
+      console.error("Registration error:", err);
+      const errorMsg = err.response?.data?.msg || 
+                      err.response?.data?.error || 
+                      err.message ||
+                      "Registration failed. Please try again.";
+      
+      if (err.code === 'ECONNREFUSED' || err.message?.includes('Network Error')) {
+        toast.error("Cannot connect to server. Please check if the backend is running.");
+      } else {
+        toast.error(errorMsg);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -65,17 +95,19 @@ function Register() {
         />
         <button 
           type="submit"
+          disabled={loading}
           style={{ 
             padding: "10px", 
             fontSize: "16px", 
-            backgroundColor: "#28a745", 
+            backgroundColor: loading ? "#6c757d" : "#28a745", 
             color: "white", 
             border: "none", 
             borderRadius: "4px",
-            cursor: "pointer"
+            cursor: loading ? "not-allowed" : "pointer",
+            opacity: loading ? 0.6 : 1
           }}
         >
-          Register
+          {loading ? "Registering..." : "Register"}
         </button>
         <p style={{ textAlign: "center", marginTop: "10px" }}>
           <a href="/">Already have an account? Login</a>

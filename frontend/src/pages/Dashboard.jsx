@@ -127,7 +127,6 @@ export default function Dashboard() {
     return cur.filter((task) => task.title.toLowerCase().includes(term));
   }, [tasks, searchTerm, categoryFilter]);
 
-  const totalTasks = tasks.length;
   const completedTasks = useMemo(() => tasks.filter((t) => !!t.completed).length, [tasks]);
   const QUOTES = [
     "Small steps, big results.",

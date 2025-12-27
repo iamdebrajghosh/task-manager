@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from "react";
 import axios, { getAccessToken, setAccessToken, setRefreshToken, clearAuth } from "../axiosInstance";
 
 const AuthContext = createContext(null);
@@ -9,7 +9,7 @@ export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(!!getAccessToken());
   const [loading, setLoading] = useState(false);
 
-  const login = async (email, password) => {
+  const login = useCallback(async (email, password) => {
     setLoading(true);
     try {
       const res = await axios.post("/auth/login", { email: email.trim(), password });
@@ -31,16 +31,16 @@ export function AuthProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     clearAuth();
     setAccess(null);
     setUser(null);
     setIsAuthenticated(false);
-  };
+  }, []);
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     const refreshToken = localStorage.getItem("refreshToken");
     if (!refreshToken) return { ok: false };
     try {
@@ -58,15 +58,15 @@ export function AuthProvider({ children }) {
       logout();
       return { ok: false };
     }
-  };
+  }, [logout]);
 
-  const fetchMe = async () => {
+  const fetchMe = useCallback(async () => {
     try {
       const res = await axios.get("/user/me");
       setUser(res.data);
       localStorage.setItem("user", JSON.stringify(res.data));
     } catch (_) {}
-  };
+  }, []);
 
   useEffect(() => {
     const init = async () => {
@@ -79,11 +79,12 @@ export function AuthProvider({ children }) {
       }
     };
     init();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on mount
 
   const value = useMemo(
     () => ({ user, accessToken, isAuthenticated, loading, login, logout, refresh, fetchMe }),
-    [user, accessToken, isAuthenticated, loading]
+    [user, accessToken, isAuthenticated, loading, login, logout, refresh, fetchMe]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
