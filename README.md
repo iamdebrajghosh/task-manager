@@ -149,7 +149,3 @@ Frontend (`frontend/package.json`):
 - `npm start` – CRA dev server
 - `npm run build` – production build
 - `npm test` – run tests
-
-## License
-
-MIT
