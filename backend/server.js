@@ -23,12 +23,25 @@ const app = express();
 
 app.set("trust proxy", "loopback");
 app.use(helmet());
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
-    credentials: true,
-  })
-);
+const allowedOrigins = (process.env.CLIENT_URL || "http://localhost:3000")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  allowedHeaders: "Content-Type,Authorization,x-auth-token",
+  optionsSuccessStatus: 204,
+  preflightContinue: false,
+};
+app.use(cors(corsOptions));
 app.use(compression());
 app.use(morgan(":remote-addr :method :url :status :response-time ms"));
 app.use(cookieParser());
